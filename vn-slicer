@@ -1,0 +1,134 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace vnc
+{
+    public static class vn_slicer
+    {
+
+        /// <summary>
+        /// Get array slice
+        /// </summary>
+        /// <param name="r">Array</param>
+        /// <param name="start">Start position (inclusive)</param>
+        /// <param name="end">End position (inclusing)</param>
+        /// <param name="step">Step</param>
+        /// <returns>Object</returns>
+        public static object[] Slice(this object[] r, int start = 0, int end = -1, int step = 1)
+        {
+            return master(r, start, end, step);
+        }
+
+
+        /// <summary>
+        /// Get string slice
+        /// </summary>
+        /// <param name="r">String</param>
+        /// <param name="start">Start position (inclusive)</param>
+        /// <param name="end">End position (inclusing)</param>
+        /// <param name="step">Step</param>
+        /// <returns>String</returns>
+        public static string Slice(this string s, int start = 0, int end = -1, int step = 1)
+        {
+            object[] a = new object[s.Length];
+            for (int i = 0; i < a.Length; i++) a[i] = s[i];
+            a = master(a, start, end, step);
+            StringBuilder str = new StringBuilder();
+            for (int i = 0; i < a.Length; i++) str.Append(a[i]);
+            return str.ToString();
+        }
+
+        /// <summary>
+        /// Get List slice
+        /// </summary>
+        /// <param name="r">List</param>
+        /// <param name="start">Start position (inclusive)</param>
+        /// <param name="end">End position (inclusing)</param>
+        /// <param name="step">Step</param>
+        /// <returns>List</returns>
+        public static List<T> Slice<T>(this List<T> l, int start = 0, int end = -1, int step = 1)
+        {
+            object[] obj = new object[l.Count];
+            for (int i = 0; i < l.Count; i++) obj[i] = l[i];
+            obj = master(obj, start, end, step);
+            List<T> result = new List<T>();
+            for (int i = 0; i < obj.Length; i++) result.Add((T)Convert.ChangeType(obj[i], typeof(T)));
+            return result;
+        }
+
+        public static string ToStr(this object[] s, string separator = "\n")
+        {
+            StringBuilder str = new StringBuilder();
+            foreach(object val in s) str.AppendFormat("{0}{1}", val, separator);
+            return str.ToString();
+        }
+
+        public static string ToStr<T>(this IEnumerable<T> obj, string separator = "\n")
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach(T item in obj)
+            {
+                sb.AppendFormat("{0}{1}", item, separator);
+            }
+            return sb.ToString();
+        }
+
+        public static List<T> GTL<T>(this List<T> l, params T[] values)
+        {
+            if (values.Length > 0) l.AddRange(values);
+            return l;
+        }
+
+        private static object[] master(object[] r, int start, int end, int step)
+        {
+            if (start >= r.Length || end >= r.Length) throw new IndexOutOfRangeException();
+
+            if (step > end) throw new IndexOutOfRangeException();
+            if (step == 0) return r;
+
+            if (step > 0)
+            {
+                if (end == -1) end = r.Length - 1;
+                if (step > end - start) new ArgumentOutOfRangeException("Слишком большой шаг");
+                if (step == end - start) return new object[] { r[end] };
+                object[] obj = new object[end - start + 1];
+                for (int i = start, j = 0; i <= end; i += step, j++)
+                {
+                    obj[j] = r[i];
+                }
+
+                object[] obj2 = new object[obj.Where(t => t != null).Count()];
+                for (int i = 0; i < obj2.Length; i++)
+                {
+                    obj2[i] = obj[i];
+                }
+                return obj2;
+            }
+            else
+            {
+                if (start == -1) start = r.Length - 1;
+                if (end == -1) end = 0;
+
+                if (start < end) throw new IndexOutOfRangeException();
+                if (start == end) return new object[] { r[end] };
+                if (step > end - start) new ArgumentOutOfRangeException("Слишком большой шаг");
+                if (step == end - start) return new object[] { r[end] };
+                object[] obj = new object[start - end + 1];
+                for (int i = start, j = 0; i >= end; i += step, j++)
+                {
+                    obj[j] = r[i];
+                }
+
+                object[] obj2 = new object[obj.Where(t => t != null).Count()];
+                for (int i = 0; i < obj2.Length; i++)
+                {
+                    obj2[i] = obj[i];
+                }
+                return obj2;
+            }
+        }
+    }
+}
